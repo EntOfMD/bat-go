@@ -36,6 +36,17 @@ type BATLossEvent struct {
 	Platform string          `db:"platform" json:"platform"`
 }
 
+// DrainJob holds info about drain jobs
+type DrainJob struct {
+	ID            uuid.UUID       `db:"id"`
+	CreatedAt     *time.Time      `db:"created_at"`
+	Credentials   string          `db:"credentials"`
+	WalletID      uuid.UUID       `db:"wallet_id"`
+	Total         decimal.Decimal `db:"total"`
+	TransactionID *string         `db:"transaction_id"`
+	Erred         bool            `db:"erred"`
+}
+
 // Datastore abstracts over the underlying datastore
 type Datastore interface {
 	walletservice.Datastore
@@ -880,16 +891,6 @@ func (pg *Postgres) RunNextDrainJob(ctx context.Context, worker DrainWorker) (bo
 		return attempted, err
 	}
 	defer pg.RollbackTx(tx)
-
-	// FIXME maybe useful to later move definition outside of this method scope
-	type DrainJob struct {
-		ID            uuid.UUID       `db:"id"`
-		Credentials   string          `db:"credentials"`
-		WalletID      uuid.UUID       `db:"wallet_id"`
-		Total         decimal.Decimal `db:"total"`
-		TransactionID *string         `db:"transaction_id"`
-		Erred         bool            `db:"erred"`
-	}
 
 	statement := `
 select *
